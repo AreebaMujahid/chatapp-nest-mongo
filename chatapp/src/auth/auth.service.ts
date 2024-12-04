@@ -66,6 +66,10 @@ import { InjectModel } from '@nestjs/mongoose';
 
     // this method is to SET NEW refreshtoken and accessToken
     private async issueTokens(user: User, response: Response) {
+<<<<<<< HEAD
+=======
+      
+>>>>>>> origin/main
       const payload = { username: user.fullname, sub: user.id };
   
       const accessToken = this.jwtService.sign(

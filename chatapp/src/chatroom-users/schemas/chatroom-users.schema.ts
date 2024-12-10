@@ -1,3 +1,8 @@
+
+//chatroom - user is handling many to manay relationship of (chatroom - user)
+
+
+
 import { Schema, Prop, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
 

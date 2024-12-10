@@ -66,12 +66,9 @@ import { InjectModel } from '@nestjs/mongoose';
 
     // this method is to SET NEW refreshtoken and accessToken
     private async issueTokens(user: User, response: Response) {
-<<<<<<< HEAD
-=======
-      
->>>>>>> origin/main
+
       const payload = { username: user.fullname, sub: user.id };
-  
+      //assign access and refresh token
       const accessToken = this.jwtService.sign(
         { ...payload },
         {
@@ -83,7 +80,7 @@ import { InjectModel } from '@nestjs/mongoose';
         secret: this.configService.get<string>('REFRESH_TOKEN_SECRET'),
         expiresIn: '7d',
       });
-  
+      //sends both token via cookie to client side
       response.cookie('access_token', accessToken, { httpOnly: true });
       response.cookie('refresh_token', refreshToken, {
         httpOnly: true,
@@ -92,31 +89,38 @@ import { InjectModel } from '@nestjs/mongoose';
     }
   
     async validateUser(loginDto: LoginDto) {
-      const user = await this.prisma.user.findUnique({
-        where: { email: loginDto.email },
-      });
-      if (user && (await bcrypt.compare(loginDto.password, user.password))) {
-        return user;
-      }
-      return null;
+        const user = await this.userModel.findOne({ email: loginDto.email }).exec();
+        if (user && (await bcrypt.compare(loginDto.password, user.password))) {
+            return user;
+        }
+        return null;
+    
+      
     }
     async register(registerDto: RegisterDto, response: Response) {
-      const existingUser = await this.prisma.user.findUnique({
-        where: { email: registerDto.email },
-      });
-      if (existingUser) {
-        throw new BadRequestException({ email: 'Email already in use' });
-      }
-      const hashedPassword = await bcrypt.hash(registerDto.password, 10);
-      const user = await this.prisma.user.create({
-        data: {
+        // Use findOne to check if a user with the same email exists
+        const existingUser = await this.userModel.findOne({ email: registerDto.email }).exec();
+    
+        if (existingUser) {
+          throw new BadRequestException({ email: 'Email already in use' });
+        }
+    
+        // Hash the password before storing it in the database
+        const hashedPassword = await bcrypt.hash(registerDto.password, 10);
+    
+        // Create a new user in MongoDB
+        const user = new this.userModel({
           fullname: registerDto.fullname,
-          password: hashedPassword,
           email: registerDto.email,
-        },
-      });
-      return this.issueTokens(user, response);
-    }
+          password: hashedPassword,
+        });
+    
+        // Save the new user to the database
+        await user.save();
+    
+        // Issue tokens (you will need to implement this function)
+        return this.issueTokens(user, response);
+      }
   
     async login(loginDto: LoginDto, response: Response) {
       const user = await this.validateUser(loginDto);
@@ -127,6 +131,7 @@ import { InjectModel } from '@nestjs/mongoose';
       }
       return this.issueTokens(user, response);
     }
+
     async logout(response: Response) {
       response.clearCookie('access_token');
       response.clearCookie('refresh_token');
